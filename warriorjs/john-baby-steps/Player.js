@@ -1,10 +1,11 @@
 class Player {
+
   playTurn(warrior) {
     this.setWarrior(warrior);
 
-    if (this.isFacingEnemy()) {
-      warrior.think('Die you bastard!');
-      warrior.attack();
+    if (this.isSomethingThere()) {
+      warrior.think('These is somethere here!');
+      this.handleUnit(warrior.feel().getUnit());
     }
     else {
       if(this.isTakingDamage()) {
@@ -31,7 +32,7 @@ class Player {
     this.health = this.warrior.health();
   }
 
-  isFacingEnemy() {
+  isSomethingThere() {
     return !this.warrior.feel().isEmpty();
   }
 
@@ -41,6 +42,16 @@ class Player {
 
   isTakingDamage() {
     return this.health > this.warrior.health();
+  }
+
+  handleUnit(unit) {
+    if (unit.isBound()) {
+      this.warrior.think("To the rescue!");
+      this.warrior.rescue();
+    }  else  {
+      this.warrior.think("You shall be destroyed!");
+      this.warrior.attack();
+    }
   }
 
   isToughEnoughToRunAndFaceArcher() {
