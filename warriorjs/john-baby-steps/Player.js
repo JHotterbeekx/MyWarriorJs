@@ -1,24 +1,30 @@
 class Player {
 
   constructor() {
-    this.direction = 'backward';
+    this.hasTracedBack = false;
+    this.isFacingFoward = true;
     this.healingUp = false;
   }
 
   playTurn(warrior) {
     this.setWarrior(warrior);
 
+    if (!this.hasTracedBack && this.isFacingFoward) {
+      this.turnAround();
+      return;
+    }
+
     if (this.isSomethingThere()) {
       warrior.think('These is somethere here!');
-      this.handleFeeling(warrior.feel(this.direction));
+      this.handleFeeling(warrior.feel(this.getDirection()));
     }
     else {
       if(this.isTakingDamage()) {
         warrior.think('There is an archer!');
         if (!this.isToughEnough()) {
-          this.goBack();
+          this.fallBack();
         } else {
-          warrior.walk(this.direction);
+          warrior.walk(this.getDirection());
         }
       } else {
         if (!this.isToughEnough()) {
@@ -26,7 +32,7 @@ class Player {
           this.rest();
         } else {
           warrior.think('Taking a walk on the wild side...');
-          warrior.walk(this.direction);
+          warrior.walk(this.getDirection());
         }
       }
     }
@@ -42,7 +48,7 @@ class Player {
   }
 
   isSomethingThere() {
-    return !this.warrior.feel(this.direction).isEmpty();
+    return !this.warrior.feel(this.getDirection()).isEmpty();
   }
 
   isToughEnough() {
@@ -62,29 +68,39 @@ class Player {
     return this.health > this.warrior.health();
   }
 
-  goBack() {
+  fallBack() {
     this.warrior.walk('backward');
+  }
+
+  turnAround() {
+    this.isFacingFoward = !this.isFacingFoward;
+    this.warrior.pivot();
   }
 
   handleFeeling(feel) {
     if (feel.isWall())  {
       this.warrior.think("Turn around!");
       this.direction = 'forward';
-      this.warrior.walk(this.direction);
+      this.hasTracedBack = true;
+      this.warrior.walk(this.getDirection());
     } else {
       const unit = feel.getUnit();
       if (unit.isBound()) {
         this.warrior.think("To the rescue!");
-        this.warrior.rescue(this.direction);
+        this.warrior.rescue(this.getDirection());
       }  else {
         this.warrior.think("I will take you out!")
-        this.warrior.attack(this.direction);
+        this.warrior.attack(this.getDirection());
       }
     }
   }
 
   isToughEnoughToRunAndFaceArcher() {
     return this.warrior.health() > 9;
+  }
+
+  getDirection() {
+    return 'forward';
   }
 }
 
