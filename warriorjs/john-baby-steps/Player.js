@@ -1,23 +1,32 @@
 class Player {
 
+  constructor() {
+    this.direction = 'backward';
+    this.healingUp = false;
+  }
+
   playTurn(warrior) {
     this.setWarrior(warrior);
 
     if (this.isSomethingThere()) {
       warrior.think('These is somethere here!');
-      this.handleUnit(warrior.feel().getUnit());
+      this.handleFeeling(warrior.feel(this.direction));
     }
     else {
       if(this.isTakingDamage()) {
-        warrior.think('There is an archer, have to take him out!');
-        warrior.walk();
+        warrior.think('There is an archer!');
+        if (!this.isToughEnough()) {
+          this.goBack();
+        } else {
+          warrior.walk(this.direction);
+        }
       } else {
         if (!this.isToughEnough()) {
           warrior.think('I\'m feeling a bit weak...');
-          warrior.rest();
+          this.rest();
         } else {
           warrior.think('Taking a walk on the wild side...');
-          warrior.walk();
+          warrior.walk(this.direction);
         }
       }
     }
@@ -33,24 +42,44 @@ class Player {
   }
 
   isSomethingThere() {
-    return !this.warrior.feel().isEmpty();
+    return !this.warrior.feel(this.direction).isEmpty();
   }
 
   isToughEnough() {
-    return this.warrior.health() > 12;
+    if (this.healingUp) {
+      if (this.warrior.health() == 20) this.healingUp = false;
+      return !this.healingUp;
+    }
+    return this.warrior.health() >= 10;
+  }
+
+  rest() {
+    this.warrior.rest();
+    this.healingUp = true;
   }
 
   isTakingDamage() {
     return this.health > this.warrior.health();
   }
 
-  handleUnit(unit) {
-    if (unit.isBound()) {
-      this.warrior.think("To the rescue!");
-      this.warrior.rescue();
-    }  else  {
-      this.warrior.think("You shall be destroyed!");
-      this.warrior.attack();
+  goBack() {
+    this.warrior.walk('backward');
+  }
+
+  handleFeeling(feel) {
+    if (feel.isWall())  {
+      this.warrior.think("Turn around!");
+      this.direction = 'forward';
+      this.warrior.walk(this.direction);
+    } else {
+      const unit = feel.getUnit();
+      if (unit.isBound()) {
+        this.warrior.think("To the rescue!");
+        this.warrior.rescue(this.direction);
+      }  else {
+        this.warrior.think("I will take you out!")
+        this.warrior.attack(this.direction);
+      }
     }
   }
 
