@@ -4,43 +4,66 @@ class Player {
     this.hasTracedBack = false;
     this.isFacingFoward = true;
     this.healingUp = false;
+    this.vision = [];
   }
 
   playTurn(warrior) {
     this.setWarrior(warrior);
 
-    if (!this.hasTracedBack && this.isFacingFoward) {
-      this.turnAround();
-      return;
+    if (this.faceTheCorrectStartingPosition()) return;
+    this.lookAround();
+    
+    for(let i = 0; i < this.vision.length; i++) {
+      if (this.handleVision(i, this.vision[i])) return;
     }
 
-    if (this.isSomethingThere()) {
-      warrior.think('These is somethere here!');
-      this.handleFeeling(warrior.feel(this.getDirection()));
-    }
-    else {
-      if(this.isTakingDamage()) {
-        warrior.think('There is an archer!');
-        if (!this.isToughEnough()) {
-          this.fallBack();
-        } else {
-          warrior.walk(this.getDirection());
-        }
-      } else {
-        if (!this.isToughEnough()) {
-          warrior.think('I\'m feeling a bit weak...');
-          this.rest();
-        } else {
-          warrior.think('Taking a walk on the wild side...');
-          warrior.walk(this.getDirection());
-        }
-      }
-    }
+    this.warrior.walk(); // Nothing to do, just walk
     this.updateHealth();
   }
 
   setWarrior(warrior) {
     this.warrior = warrior;
+  }
+
+  faceTheCorrectStartingPosition() {
+    if (!this.hasTracedBack && this.isFacingFoward) {
+      if (this.warrior.feel('backward').isWall()) {
+        this.hasTracedBack = true;
+        return false;
+      }
+      this.turnAround();
+      return true;
+    }
+  }
+
+  lookAround() {
+    this.vision = this.warrior.look();
+  }
+
+  handleVision(index, vision) {
+    if (vision.isStairs()) {
+      this.warrior.walk();
+      return true;
+    }
+    if (vision.isEmpty()) return false; // Stairs count as empty as well
+    if (vision.isWall()) {
+      this.turnAround();
+      return true;
+    }
+    if (vision.isUnit()) {
+      const unit = vision.getUnit();
+      if (unit.isBound()) {
+        if (index > 0) {
+          this.warrior.walk();
+          return true;
+        }
+        this.warrior.rescue();
+        return true;
+      }
+
+      this.warrior.shoot();
+      return true;
+    }
   }
 
   updateHealth() {
