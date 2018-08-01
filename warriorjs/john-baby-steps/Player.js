@@ -1,7 +1,23 @@
 class Player {
   playTurn(warrior) {
-    // Cool code goes here.
-    if (!warrior.feel().isEmpty()) warrior.attack();
-    else warrior.walk();
+    if (this.isFacingEnemy(warrior)) {
+      warrior.attack();
+    }
+    else {
+      if (!this.isToughEnough(warrior)) {
+        warrior.rest();
+      } else {
+        warrior.walk();
+      }
+    }
+  }
+
+  isFacingEnemy(warrior) {
+    return !warrior.feel().isEmpty();
+  }
+
+  isToughEnough(warrior) {
+    return warrior.health() > 6;
   }
 }
+
